@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MVQA</string>
+    <string name="question_entered_text">Enter a question here</string>
+    <string name="result_text">Result:</string>
+    <string name="answer_text">-</string>
+    <string name="submit_question">Submit question</string>
+</resources>
