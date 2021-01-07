@@ -5,6 +5,8 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Debug;
+import android.os.Trace;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
@@ -31,6 +33,8 @@ public class CnnLstmModel extends VqaModel {
     private TensorBuffer imageFeature;
     private TensorBuffer questionFeature;
     private TensorBuffer cnnImageFeature;
+
+    private static final int packetCount = 20;
 
     /*
     This code is the preprocessing code written by Stackoverflow user Tom
@@ -86,52 +90,41 @@ public class CnnLstmModel extends VqaModel {
     }
 
     public void testQuestionOnly() {
-        ArrayList<float[]> testImageFeatures = new ArrayList<>();
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    context.getAssets().open("val.txt")
-            ));
-            String line;
-            while((line = br.readLine()) != null) {
-                String[] values = line.split(" ");
-                float[] floatValues = new float[values.length];
-                for (int i = 0; i < values.length; i++) {
-                    floatValues[i] = Float.parseFloat(values[i]);
+            long[] elapsedTime = new long[packetCount];
+            int[] matches = new int[packetCount];
+            for (int i = 0; i < packetCount; i++) {
+                InputStream io = context.getAssets().open("packets/test_packet" + i + ".h5");
+                HdfFile hdfFile = HdfFile.fromInputStream(io);
+                Dataset datasetQuestions = hdfFile.getDatasetByPath("ques");
+                Dataset datasetImageFeatures = hdfFile.getDatasetByPath("img_feats");
+                Dataset datasetAnswers = hdfFile.getDatasetByPath("answers");
+                float[][] questions = (float[][])datasetQuestions.getData();
+                float[][] imageFeatures = (float[][])datasetImageFeatures.getData();
+                int[] answers = (int[])datasetAnswers.getData();
+
+                long startTime = System.currentTimeMillis();
+                int match = 0;
+                for (int j = 0; j < 10; j++) {
+                    cnnImageFeature.loadArray(imageFeatures[j]);
+                    questionFeature.loadArray(questions[j]);
+                    Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
+                    TensorBuffer answerFeature = vqaOutputs.getOutputFeature0AsTensorBuffer();
+                    float[] probs = answerFeature.getFloatArray();
+                    float maxProb = 0;
+                    int answer = -1;
+                    for (int k = 0; k < probs.length; k++) {
+                       if (maxProb < probs[k]) {
+                           answer = k;
+                           maxProb = probs[k];
+                       }
+                    }
+                    if (answers[i] == answer) {
+                        match++;
+                    }
                 }
-                testImageFeatures.add(floatValues);
+                hdfFile.close();
             }
-
-            InputStream io = context.getAssets().open("data_prepro.h5");
-            HdfFile hdfFile = HdfFile.fromInputStream(io);
-            Dataset datasetQuestions = hdfFile.getDatasetByPath("ques_train");
-            Dataset datasetQuestionLengths = hdfFile.getDatasetByPath("ques_length_train");
-            Dataset datasetImagePos = hdfFile.getDatasetByPath("img_pos_train");
-            Dataset datasetAnswers = hdfFile.getDatasetByPath("answers");
-            long[][] questions = (long[][])datasetQuestions.getData();
-            long[] questionLengths = (long[])datasetQuestionLengths.getData();
-            long[] imagePos = (long[])datasetImagePos.getData();
-            long[] answers = (long[])datasetAnswers.getData();
-
-            int match = 0;
-            for (int i = 0; i < testImageFeatures.size(); i++) {
-                float[] image = testImageFeatures.get(i);
-                cnnImageFeature.loadArray(image);
-                float[] question = new float[26];
-                for (int j = 0; i < 26; i++) {
-                    question[j] = (float)questions[i][j];
-                }
-                questionFeature.loadArray(question);
-                Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
-                TensorBuffer answerFeature = vqaOutputs.getOutputFeature0AsTensorBuffer();
-                int answer = answerFeature.getIntArray()[0]+1;
-                if (answer == answers[i]) {
-                    match++;
-                }
-            }
-            System.out.println(match);
-
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
