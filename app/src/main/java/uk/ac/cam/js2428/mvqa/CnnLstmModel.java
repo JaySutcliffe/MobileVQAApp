@@ -5,24 +5,16 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.Debug;
-import android.os.Trace;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Map;
 
 import io.jhdf.HdfFile;
 import io.jhdf.api.Dataset;
-import io.jhdf.api.Node;
 import uk.ac.cam.js2428.mvqa.ml.Vgg19Quant8;
 import uk.ac.cam.js2428.mvqa.ml.Vqa;
 
@@ -34,7 +26,8 @@ public class CnnLstmModel extends VqaModel {
     private TensorBuffer questionFeature;
     private TensorBuffer cnnImageFeature;
 
-    private static final int packetCount = 20;
+    private static final int PACKET_COUNT = 20;
+    private static final int PACKET_SIZE = 1000;
 
     /*
     This code is the preprocessing code written by Stackoverflow user Tom
@@ -81,19 +74,29 @@ public class CnnLstmModel extends VqaModel {
 
     @Override
     public String runInference(String question) throws QuestionException {
-        questionFeature.loadArray(parseQuestion(question));
-        Vgg19Quant8.Outputs cnnOutputs = cnn.process(imageFeature);
-        cnnImageFeature = cnnOutputs.getOutputFeature0AsTensorBuffer();
+        questionFeature.loadArray(new float[26]);
+        //Vgg19Quant8.Outputs cnnOutputs = cnn.process(imageFeature);
+        //cnnImageFeature = cnnOutputs.getOutputFeature0AsTensorBuffer();
+        cnnImageFeature.loadArray(new float[4096]);
         Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
         TensorBuffer answerFeature = vqaOutputs.getOutputFeature0AsTensorBuffer();
-        return decodeAnswer(answerFeature.getIntArray()[0]);
+        float[] probs = answerFeature.getFloatArray();
+        float maxProb = 0;
+        int answer = -1;
+        for (int k = 0; k < probs.length; k++) {
+            if (maxProb < probs[k]) {
+                answer = k;
+                maxProb = probs[k];
+            }
+        }
+        return decodeAnswer(answer);
     }
 
-    public void testQuestionOnly() {
+    public EvaluationOutput evaluateQuestionOnly() {
         try {
-            long[] elapsedTime = new long[packetCount];
-            int[] matches = new int[packetCount];
-            for (int i = 0; i < packetCount; i++) {
+            long[] elapsedTime = new long[PACKET_COUNT];
+            int[] matches = new int[PACKET_COUNT];
+            for (int i = 0; i < PACKET_COUNT; i++) {
                 InputStream io = context.getAssets().open("packets/test_packet" + i + ".h5");
                 HdfFile hdfFile = HdfFile.fromInputStream(io);
                 Dataset datasetQuestions = hdfFile.getDatasetByPath("ques");
@@ -104,8 +107,7 @@ public class CnnLstmModel extends VqaModel {
                 int[] answers = (int[])datasetAnswers.getData();
 
                 long startTime = System.currentTimeMillis();
-                int match = 0;
-                for (int j = 0; j < 10; j++) {
+                for (int j = 0; j < PACKET_SIZE; j++) {
                     cnnImageFeature.loadArray(imageFeatures[j]);
                     questionFeature.loadArray(questions[j]);
                     Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
@@ -119,15 +121,18 @@ public class CnnLstmModel extends VqaModel {
                            maxProb = probs[k];
                        }
                     }
-                    if (answers[i] == answer) {
-                        match++;
+                    if (answers[j] == answer) {
+                        matches[i]++;
                     }
                 }
+                elapsedTime[i] = System.currentTimeMillis() - startTime;
                 hdfFile.close();
             }
+            return new EvaluationOutput(PACKET_SIZE, matches, elapsedTime);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public CnnLstmModel (Context context) {
@@ -149,12 +154,11 @@ public class CnnLstmModel extends VqaModel {
             questionFeature =
                     TensorBuffer.createFixedSize(new int[]{1, 26}, DataType.FLOAT32);
             cnnImageFeature =
-                    TensorBuffer.createFixedSize(new int[]{1, 1000}, DataType.FLOAT32);
+                    TensorBuffer.createFixedSize(new int[]{1, 4096}, DataType.FLOAT32);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();
         }
-        testQuestionOnly();
     }
 
 }

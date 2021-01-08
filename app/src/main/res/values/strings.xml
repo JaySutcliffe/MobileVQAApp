@@ -4,4 +4,7 @@
     <string name="result_text">Result:</string>
     <string name="answer_text">-</string>
     <string name="submit_question">Submit question</string>
+    <string name="test_button_text">Evaluate on test set</string>
+    <string name="accuracy_text">-</string>
+    <string name="execution_time_text">-</string>
 </resources>

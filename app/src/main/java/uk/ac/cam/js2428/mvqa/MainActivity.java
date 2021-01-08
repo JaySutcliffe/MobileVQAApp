@@ -14,6 +14,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -43,12 +44,28 @@ public class MainActivity extends AppCompatActivity {
         String answer;
         try {
             VqaModel vqa = new CnnLstmModel(this);
-            vqa.setImage("COCO_val2014_000000000042.jpg");
+            //vqa.setImage("COCO_val2014_000000000042.jpg");
             answer = vqa.runInference(question);
-        } catch (QuestionException | IOException e) {
+        } catch (QuestionException e) {//| IOException e) {
             answer = e.getMessage();
         }
         TextView textView = findViewById(R.id.answerTextView);
         textView.setText(answer);
+    }
+
+    /**
+     * Function called when the test button is pressed to
+     * evaluate the model on device on the test set
+     * @param view View of the onclick listener
+     */
+    public void evaluateTestSet(View view) {
+        CnnLstmModel vqa = new CnnLstmModel(this);
+        EvaluationOutput eo = vqa.evaluateQuestionOnly();
+        TextView accuracyTextView = findViewById(R.id.accuracyTextView);
+        accuracyTextView.setText(new StringBuilder().append("Accuracies: ").
+                append(Arrays.toString(eo.getAccuracies())).toString());
+        TextView executionTimeTextView = findViewById(R.id.ExecutionTimeTextView);
+        executionTimeTextView.setText(new StringBuilder().append("Execution times(ms): ").
+                append(Arrays.toString(eo.getElapsedTime())).toString());
     }
 }

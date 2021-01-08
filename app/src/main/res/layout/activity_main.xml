@@ -46,5 +46,26 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/answer_text" />
+
+        <Button
+            android:id="@+id/testButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="evaluateTestSet"
+            android:text="@string/test_button_text" />
+
+        <TextView
+            android:id="@+id/accuracyTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/accuracy_text" />
+
+        <TextView
+            android:id="@+id/ExecutionTimeTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/execution_time_text" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

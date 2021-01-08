@@ -99,5 +99,6 @@
     <orderEntry type="library" name="Gradle: org.tensorflow:tensorflow-lite-support:0.1.0-rc1@aar" level="project" />
     <orderEntry type="library" name="Gradle: org.tensorflow:tensorflow-lite:2.2.0@aar" level="project" />
     <orderEntry type="library" name="Gradle: org.tensorflow:tensorflow-lite-gpu:2.4.0@aar" level="project" />
+    <orderEntry type="library" name="Gradle: com.android.support:multidex:1.0.3@aar" level="project" />
   </component>
 </module>
