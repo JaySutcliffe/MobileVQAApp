@@ -12,12 +12,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 public abstract class VqaModel {
-    private final int maxQuestionLength = 26;
+    protected final int maxQuestionLength = 26;
     private final Map<String, Integer> wordToIx = new HashMap<>();
     private final Map<Integer, String> ixToAnswer = new HashMap<>();
 
     abstract void setImage(String imageLocation) throws IOException;
     abstract String runInference(String question) throws QuestionException;
+    abstract EvaluationOutput evaluateQuestionOnly();
 
     public VqaModel(Context context) {
         // Opening the JSON file
