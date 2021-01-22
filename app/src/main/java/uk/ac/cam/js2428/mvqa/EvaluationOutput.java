@@ -1,25 +1,46 @@
 package uk.ac.cam.js2428.mvqa;
 
 public class EvaluationOutput {
-    private int packetSize;
-    private final int[] matches;
-    private final long[] elapsedTime;
+    private int matches;
+    private final int[] elapsedCnnTime;
+    private final int[] elapsedNlpTime;
 
-    public float[] getAccuracies() {
-        float[] accuracies = new float[matches.length];
-        for (int i = 0; i < matches.length; i++) {
-            accuracies[i] = ((float)matches[i])/((float)packetSize);
+    /**
+     * Returns the classifier accuracy tested on elapsedNlpTime.length questions
+     * @return accuracy as a float in the range [0,1]
+     */
+    public float getAccuracy() {
+        return ((float)matches/(float)elapsedNlpTime.length);
+    }
+
+    /**
+     * Returns the classifier's average elapsed time to generate image features
+     * @return time as a float in ms
+     */
+    public float getMeanCnnTime() {
+        long total = 0;
+        for (int i = 0; i < elapsedCnnTime.length; i++) {
+            total += elapsedCnnTime[i];
         }
-        return accuracies;
+        return (float)((double)total/(double)elapsedCnnTime.length);
     }
 
-    public long[] getElapsedTime() {
-        return elapsedTime;
+    /**
+     * Returns the classifier's average elapsed time to generate an answer
+     * from image features and processing a question
+     * @return time as a float in ms
+     */
+    public float getMeanNlpTime() {
+        long total = 0;
+        for (int i = 0; i < elapsedNlpTime.length; i++) {
+            total += elapsedNlpTime[i];
+        }
+        return (float)((double)total/(double)elapsedNlpTime.length);
     }
 
-    public EvaluationOutput(int packetSize, int[] matches, long[] elapsedTime) {
-        this.packetSize = packetSize;
+    public EvaluationOutput(int matches, int[] elapsedCnnTime, int[] elapsedNlpTime) {
         this.matches = matches;
-        this.elapsedTime = elapsedTime;
+        this.elapsedCnnTime = elapsedCnnTime;
+        this.elapsedNlpTime = elapsedNlpTime;
     }
 }

@@ -1,30 +1,19 @@
 package uk.ac.cam.js2428.mvqa;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-
-import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import uk.ac.cam.js2428.mvqa.ml.Cnn;
-import uk.ac.cam.js2428.mvqa.ml.Vqa;
 
 public class MainActivity extends AppCompatActivity {
     private VqaModel vqa;
@@ -37,14 +26,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void submitImage(View view) {
-        try {
-            vqa.setImage("images/COCO_val2014_000000000042.jpg");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // https://www.youtube.com/watch?v=TXjf3aK3GNo
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*"); // Pick any type of image
+        startActivityForResult(Intent.createChooser(intent, "Choose image"), 1);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == 1) {
+            ImageView imageView = findViewById(R.id.imageView);
 
+            try {
+                InputStream is = getContentResolver().openInputStream(data.getData());
+                Bitmap bitmap = BitmapFactory.decodeStream(is);
+                imageView.setImageBitmap(bitmap);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 
     /**
@@ -72,12 +74,15 @@ public class MainActivity extends AppCompatActivity {
      * @param view View of the onclick listener
      */
     public void evaluateTestSet(View view) {
-        EvaluationOutput eo = vqa.evaluateQuestionOnly();
+        EvaluationOutput eo = vqa.evaluate();
         TextView accuracyTextView = findViewById(R.id.accuracyTextView);
-        accuracyTextView.setText(new StringBuilder().append("Accuracies: ").
-                append(Arrays.toString(eo.getAccuracies())).toString());
+        accuracyTextView.setText(new StringBuilder().append("Accuracy = ").
+                append(eo.getAccuracy()));
         TextView executionTimeTextView = findViewById(R.id.ExecutionTimeTextView);
-        executionTimeTextView.setText(new StringBuilder().append("Execution times(ms): ").
-                append(Arrays.toString(eo.getElapsedTime())).toString());
+        executionTimeTextView.setText(new StringBuilder().append("Execution times(ms): cnn = ").
+                append(eo.getMeanCnnTime()).
+                append(", nlp = ").
+                append(eo.getMeanNlpTime()));
+        vqa.evaluate();
     }
 }

@@ -1,10 +1,7 @@
 package uk.ac.cam.js2428.mvqa;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 
 
 import org.tensorflow.lite.DataType;
@@ -26,24 +23,32 @@ import uk.ac.cam.js2428.mvqa.ml.Vqa;
 
 
 public class CnnLstmModel extends VqaModel {
-    private final Context context;
     private Cnn cnn;
     private Vqa model;
     private TensorBuffer imageFeature;
     private TensorBuffer questionFeature;
     private TensorBuffer cnnImageFeature;
 
-    private ImageProcessor imageProcessor;
-    private TensorImage tImage;
-
     private static final int PACKET_COUNT = 20;
     private static final int PACKET_SIZE = 20;
 
     @Override
-    public void setImage(String imageLocation) throws IOException {
-        AssetManager assetManager = context.getAssets();
-        InputStream is = assetManager.open(imageLocation);
-        Bitmap bitmap = BitmapFactory.decodeStream(is);
+    public void setImage(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+        int smallestDim = width;
+        if (width > height) {
+            smallestDim = height;
+        }
+
+        ImageProcessor imageProcessor =
+                new ImageProcessor.Builder()
+                        .add(new ResizeOp(224, 224,
+                                ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
+                        .add(new NormalizeOp(127.5f, 127.5f))
+                        .build();
+        TensorImage tImage = new TensorImage(DataType.FLOAT32);
         tImage.load(bitmap);
         imageFeature = imageProcessor.process(tImage).getTensorBuffer();
         cnnImageFeature = cnn.process(imageFeature).getOutputFeature0AsTensorBuffer();
@@ -67,7 +72,7 @@ public class CnnLstmModel extends VqaModel {
     }
 
     @Override
-    public EvaluationOutput evaluateQuestionOnly() {
+    public NlpOnlyEvaluationOutput evaluateQuestionOnly() {
         try {
             long[] elapsedTime = new long[PACKET_COUNT];
             int[] matches = new int[PACKET_COUNT];
@@ -114,7 +119,7 @@ public class CnnLstmModel extends VqaModel {
                 }
                 elapsedTime[i] = System.currentTimeMillis() - startTime;
             }
-            return new EvaluationOutput(PACKET_SIZE, matches, elapsedTime);
+            return new NlpOnlyEvaluationOutput(PACKET_SIZE, matches, elapsedTime);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -123,28 +128,24 @@ public class CnnLstmModel extends VqaModel {
 
     public CnnLstmModel (Context context) {
         super(context);
-        this.context = context;
 
         // https://www.tensorflow.org/lite/convert/metadata
-        Model.Options options;
+        Model.Options options1;
+        Model.Options options2;
         CompatibilityList compatList = new CompatibilityList();
 
         if (compatList.isDelegateSupportedOnThisDevice()){
             // if the device has a supported GPU, add the GPU delegate
-            options = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
+            options1 = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
         } else {
             // if the GPU is not supported, run on 4 threads
-            options = new Model.Options.Builder().setNumThreads(4).build();
+            options1 = new Model.Options.Builder().setNumThreads(4).build();
         }
 
+        options2 = new Model.Options.Builder().setNumThreads(4).build();
+
         try {
-            imageProcessor =
-                    new ImageProcessor.Builder()
-                            .add(new ResizeOp(224, 224, ResizeOp.ResizeMethod.BILINEAR))
-                            .add(new NormalizeOp(127.5f, 127.5f))
-                            .build();
-            tImage = new TensorImage(DataType.FLOAT32);
-            cnn = Cnn.newInstance(context, options);
+            cnn = Cnn.newInstance(context, options1);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();
@@ -152,11 +153,11 @@ public class CnnLstmModel extends VqaModel {
 
         // Initialising the VQA model
         try {
-            model = Vqa.newInstance(context, options);
+            model = Vqa.newInstance(context, options2);
             questionFeature =
                     TensorBuffer.createFixedSize(new int[]{1, 26}, DataType.FLOAT32);
             cnnImageFeature =
-                    TensorBuffer.createFixedSize(new int[]{1, 4096}, DataType.FLOAT32);
+                    TensorBuffer.createFixedSize(new int[]{1, 1280}, DataType.FLOAT32);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();

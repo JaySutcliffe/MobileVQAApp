@@ -24,6 +24,12 @@
             android:onClick="submitImage"
             android:text="@string/enter_image_text" />
 
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@android:drawable/ic_menu_gallery" />
+
         <EditText
             android:id="@+id/questionEditText"
             android:layout_width="match_parent"

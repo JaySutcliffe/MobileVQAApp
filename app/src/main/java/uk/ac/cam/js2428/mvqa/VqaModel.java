@@ -1,7 +1,10 @@
 package uk.ac.cam.js2428.mvqa;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,14 +16,18 @@ import java.util.Map;
 
 public abstract class VqaModel {
     protected final int maxQuestionLength = 26;
+    protected final Context context;
+
     private final Map<String, Integer> wordToIx = new HashMap<>();
     private final Map<Integer, String> ixToAnswer = new HashMap<>();
+    private float unknownWord;
 
-    abstract void setImage(String imageLocation) throws IOException;
+    abstract void setImage(Bitmap bitmap);
     abstract String runInference(String question) throws QuestionException;
-    abstract EvaluationOutput evaluateQuestionOnly();
+    abstract NlpOnlyEvaluationOutput evaluateQuestionOnly();
 
     public VqaModel(Context context) {
+        this.context = context;
         // Opening the JSON file
         try {
             InputStream is = context.getAssets().open("data_prepro.json");
@@ -50,6 +57,7 @@ public abstract class VqaModel {
                 String s = ixToAnswerJSON.getString(key);
                 ixToAnswer.put(ix, s);
             }
+            unknownWord = (float)wordToIx.get("UNK");
         } catch (IOException | JSONException e) {
             System.err.println("Problem loading JSON file containing word indices");
             e.printStackTrace();
@@ -70,19 +78,19 @@ public abstract class VqaModel {
         String reg = "[-.\"',;? !$#@~()*&^%\\[\\]/\\\\+<>\\n=]";
         String[] wordArray = question.split(reg);
 
-        if (wordArray.length > maxQuestionLength) {
+        if (wordArray.length >= maxQuestionLength) {
             throw new QuestionTooLongException(maxQuestionLength);
         }
 
         float[] result = new float[maxQuestionLength];
-        int i = maxQuestionLength - 1;
+        int i = maxQuestionLength - wordArray.length - 1;
         for (String s : wordArray) {
             Integer ix = wordToIx.get(s);
             if (ix != null) {
                 result[i] = (float)ix;
-                i--;
+                i++;
             } else {
-                throw new UnknownWordException(s);
+                result[i] = unknownWord;
             }
         }
         return result;
@@ -101,6 +109,52 @@ public abstract class VqaModel {
             throw new UnknownAnswerException(answer);
         }
         return s;
+    }
+
+    /**
+     * Runs the network on a subset of the test data generating a object
+     * containing information about performance metrics and accuracy
+     * @return an EvaluationOutput object
+     */
+    public EvaluationOutput evaluate() {
+        try {
+            JSONArray jsonArray;
+            {
+                InputStream is = context.getAssets().open("vqa_device_test.json");
+                int size = is.available();
+                byte[] buffer = new byte[size];
+                is.read(buffer);
+                is.close();
+                String fileString = new String(buffer, "UTF-8");
+                jsonArray = new JSONArray(fileString);
+            }
+            int match = 0;
+            int[] elapsedCnnTime = new int[100];
+            int[] elapsedNlpTime = new int[100];
+            for (int i = 0; i < 100; i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String imageName = jsonObject.getString("img_name");
+                String question = jsonObject.getString("question");
+                String answer = jsonObject.getString("ans");
+
+                InputStream is = context.getAssets().open("images/" + imageName);
+                Bitmap bitmap = BitmapFactory.decodeStream(is);
+
+                long startTime = System.currentTimeMillis();
+                setImage(bitmap);
+                elapsedCnnTime[i] = (int)(System.currentTimeMillis() - startTime);
+                startTime = System.currentTimeMillis();
+                String guess = runInference(question);
+                elapsedNlpTime[i] = (int)(System.currentTimeMillis() - startTime);
+                if (answer.equals(guess)) {
+                    match++;
+                }
+            }
+            return new EvaluationOutput(match, elapsedCnnTime, elapsedNlpTime);
+        } catch (IOException | JSONException | QuestionException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
