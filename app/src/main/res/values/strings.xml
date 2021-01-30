@@ -8,4 +8,5 @@
     <string name="test_button_text">Evaluate on test set</string>
     <string name="accuracy_text">-</string>
     <string name="execution_time_text">-</string>
+    <string name="cpu_time_text">-</string>
 </resources>

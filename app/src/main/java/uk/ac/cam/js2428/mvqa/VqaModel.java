@@ -12,7 +12,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import souch.androidcpu.CpuInfo;
 
 public abstract class VqaModel {
     protected final int maxQuestionLength = 26;
@@ -22,13 +28,15 @@ public abstract class VqaModel {
     private final Map<Integer, String> ixToAnswer = new HashMap<>();
     private float unknownWord;
 
+    private int numberOfReadings = 100;
+
     abstract void setImage(Bitmap bitmap);
     abstract String runInference(String question) throws QuestionException;
-    abstract NlpOnlyEvaluationOutput evaluateQuestionOnly();
 
     public VqaModel(Context context) {
         this.context = context;
         // Opening the JSON file
+
         try {
             InputStream is = context.getAssets().open("data_prepro.json");
             int size = is.available();
@@ -70,10 +78,39 @@ public abstract class VqaModel {
      * @return float array of word indices.
      * @throws QuestionTooLongException if the question length is longer than
      * the maximum number of words for the model.
-     * @throws UnknownWordException if a word occurs that the model is not
-     * trained on.
      */
     protected float[] parseQuestion(String question) throws QuestionException {
+        question = question.toLowerCase();
+        String reg = "[-.\"',;? !$#@~()*&^%\\[\\]/\\\\+<>\\n=]";
+        String[] wordArray = question.split(reg);
+
+        if (wordArray.length >= maxQuestionLength) {
+            throw new QuestionTooLongException(maxQuestionLength);
+        }
+
+        float[] result = new float[maxQuestionLength];
+        int i = 0;
+        for (String s : wordArray) {
+            Integer ix = wordToIx.get(s);
+            if (ix != null) {
+                result[i] = (float)ix;
+            } else {
+                result[i] = unknownWord;
+            }
+            i++;
+        }
+        return result;
+    }
+
+    /**
+     * Converts the question to a suitable format to pass to the VQA model.
+     * This is for VQA models when the question is left-padded
+     * @param question a String of words
+     * @return float array of word indices.
+     * @throws QuestionTooLongException if the question length is longer than
+     * the maximum number of words for the model.
+     */
+    protected float[] parseQuestionLeftPadded(String question) throws QuestionException {
         question = question.toLowerCase();
         String reg = "[-.\"',;? !$#@~()*&^%\\[\\]/\\\\+<>\\n=]";
         String[] wordArray = question.split(reg);
@@ -88,10 +125,10 @@ public abstract class VqaModel {
             Integer ix = wordToIx.get(s);
             if (ix != null) {
                 result[i] = (float)ix;
-                i++;
             } else {
                 result[i] = unknownWord;
             }
+            i++;
         }
         return result;
     }
@@ -129,28 +166,46 @@ public abstract class VqaModel {
                 jsonArray = new JSONArray(fileString);
             }
             int match = 0;
-            int[] elapsedCnnTime = new int[100];
-            int[] elapsedNlpTime = new int[100];
-            for (int i = 0; i < 100; i++) {
+            int[] elapsedCnnTime = new int[numberOfReadings];
+            int[] elapsedNlpTime = new int[numberOfReadings];
+            List<List<Integer>> cpuUsages = new LinkedList<>();
+            String[] imageNames = new String[numberOfReadings];
+            String[] questions = new String[numberOfReadings];
+            String[] answers = new String[numberOfReadings];
+            for (int i = 0; i < numberOfReadings; i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-                String imageName = jsonObject.getString("img_name");
-                String question = jsonObject.getString("question");
-                String answer = jsonObject.getString("ans");
-
-                InputStream is = context.getAssets().open("images/" + imageName);
+                imageNames[i] = jsonObject.getString("img_name");
+                questions[i] = jsonObject.getString("question");
+                answers[i] = jsonObject.getString("ans");
+            }
+            for (int i = 0; i < numberOfReadings; i++) {
+                InputStream is = context.getAssets().open("images/" + imageNames[i]);
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
+                is.close();
+
+                List<Integer> cpuUsage = new LinkedList<>();
+                TimerTask cpuTimerTask = new TimerTask() {
+                    public void run() {
+                        cpuUsage.add(CpuInfo.getCpuUsage());
+                    }
+                };
+                Timer cpuTimer = new Timer("Cpu timer");
+                cpuTimer.schedule(cpuTimerTask, 0, 10);
 
                 long startTime = System.currentTimeMillis();
                 setImage(bitmap);
                 elapsedCnnTime[i] = (int)(System.currentTimeMillis() - startTime);
                 startTime = System.currentTimeMillis();
-                String guess = runInference(question);
+                String guess = runInference(questions[i]);
                 elapsedNlpTime[i] = (int)(System.currentTimeMillis() - startTime);
-                if (answer.equals(guess)) {
+                if (answers[i].equals(guess)) {
                     match++;
                 }
+                cpuTimerTask.cancel();
+                cpuTimer.cancel();
+                cpuUsages.add(cpuUsage);
             }
-            return new EvaluationOutput(match, elapsedCnnTime, elapsedNlpTime);
+            return new EvaluationOutput(match, elapsedCnnTime, elapsedNlpTime, cpuUsages);
         } catch (IOException | JSONException | QuestionException e) {
             e.printStackTrace();
         }

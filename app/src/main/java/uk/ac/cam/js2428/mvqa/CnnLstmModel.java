@@ -25,6 +25,8 @@ import uk.ac.cam.js2428.mvqa.ml.Vqa;
 public class CnnLstmModel extends VqaModel {
     private Cnn cnn;
     private Vqa model;
+
+    private ImageProcessor imageProcessor;
     private TensorBuffer imageFeature;
     private TensorBuffer questionFeature;
     private TensorBuffer cnnImageFeature;
@@ -32,22 +34,9 @@ public class CnnLstmModel extends VqaModel {
     private static final int PACKET_COUNT = 20;
     private static final int PACKET_SIZE = 20;
 
+
     @Override
     public void setImage(Bitmap bitmap) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-
-        int smallestDim = width;
-        if (width > height) {
-            smallestDim = height;
-        }
-
-        ImageProcessor imageProcessor =
-                new ImageProcessor.Builder()
-                        .add(new ResizeOp(224, 224,
-                                ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
-                        .add(new NormalizeOp(127.5f, 127.5f))
-                        .build();
         TensorImage tImage = new TensorImage(DataType.FLOAT32);
         tImage.load(bitmap);
         imageFeature = imageProcessor.process(tImage).getTensorBuffer();
@@ -71,7 +60,6 @@ public class CnnLstmModel extends VqaModel {
         return decodeAnswer(answer);
     }
 
-    @Override
     public NlpOnlyEvaluationOutput evaluateQuestionOnly() {
         try {
             long[] elapsedTime = new long[PACKET_COUNT];
@@ -146,6 +134,12 @@ public class CnnLstmModel extends VqaModel {
 
         try {
             cnn = Cnn.newInstance(context, options1);
+            imageProcessor =
+                    new ImageProcessor.Builder()
+                            .add(new ResizeOp(224, 224,
+                                    ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
+                            .add(new NormalizeOp(127.5f, 127.5f))
+                            .build();
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();

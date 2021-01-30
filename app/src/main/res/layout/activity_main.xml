@@ -75,11 +75,18 @@
             android:text="@string/accuracy_text" />
 
         <TextView
-            android:id="@+id/ExecutionTimeTextView"
+            android:id="@+id/executionTimeTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/execution_time_text" />
+
+        <TextView
+            android:id="@+id/cpuTimeTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/cpu_time_text" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

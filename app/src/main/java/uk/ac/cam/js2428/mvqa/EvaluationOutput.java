@@ -1,9 +1,22 @@
 package uk.ac.cam.js2428.mvqa;
 
+import android.os.Environment;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
 public class EvaluationOutput {
     private int matches;
     private final int[] elapsedCnnTime;
     private final int[] elapsedNlpTime;
+    private final List<List<Integer>> cpuTime;
 
     /**
      * Returns the classifier accuracy tested on elapsedNlpTime.length questions
@@ -38,9 +51,27 @@ public class EvaluationOutput {
         return (float)((double)total/(double)elapsedNlpTime.length);
     }
 
-    public EvaluationOutput(int matches, int[] elapsedCnnTime, int[] elapsedNlpTime) {
+    public float getMeanCpuUtilisation() {
+        long total = 0; // Long will be enough should not have overflow
+        int size = 0;
+        for (List<Integer> cpuList : cpuTime) {
+            size += cpuList.size();
+            for (int i : cpuList) {
+                total += i;
+            }
+        }
+        return (float)((double)total/(double)size);
+    }
+
+    public List<List<Integer>> getCpuTime() {
+        return cpuTime;
+    }
+
+    public EvaluationOutput(int matches, int[] elapsedCnnTime, int[] elapsedNlpTime,
+                            List<List<Integer>> cpuTime) {
         this.matches = matches;
         this.elapsedCnnTime = elapsedCnnTime;
         this.elapsedNlpTime = elapsedNlpTime;
+        this.cpuTime = cpuTime;
     }
 }
