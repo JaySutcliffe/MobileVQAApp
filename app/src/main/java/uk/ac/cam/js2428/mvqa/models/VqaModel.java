@@ -1,4 +1,4 @@
-package uk.ac.cam.js2428.mvqa;
+package uk.ac.cam.js2428.mvqa.models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -19,6 +19,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import souch.androidcpu.CpuInfo;
+import uk.ac.cam.js2428.mvqa.questions.QuestionException;
+import uk.ac.cam.js2428.mvqa.questions.QuestionTooLongException;
+import uk.ac.cam.js2428.mvqa.questions.UnknownAnswerException;
 
 public abstract class VqaModel {
     protected final int maxQuestionLength = 26;
@@ -28,10 +31,27 @@ public abstract class VqaModel {
     private final Map<Integer, String> ixToAnswer = new HashMap<>();
     private float unknownWord;
 
-    private int numberOfReadings = 100;
+    private int NUMBER_OF_READINGS = 100;
 
-    abstract void setImage(Bitmap bitmap);
-    abstract String runInference(String question) throws QuestionException;
+    /**
+     * Sets the image to perform the inference on. In the case where the image
+     * feature model is separate from the question processing part of the model,
+     * the image features will be calculated by this function.
+     * @param bitmap the bitmap image to be entered.
+     */
+    public abstract void setImage(Bitmap bitmap);
+
+    /**
+     * Runs the VQA model inference on the question entered. The image must be
+     * set beforehand. A QuestionException is thrown if the question is too long.
+     * Currently the maximum length of the question is 26 words which covers all
+     * possible questions in the VQA dataset.
+     * @param question a String of words
+     * @return float array of word indices.
+     * @throws QuestionTooLongException if the question length is longer than
+     * the maximum number of words for the model.
+     */
+    public abstract String runInference(String question) throws QuestionException;
 
     public VqaModel(Context context) {
         this.context = context;
@@ -93,9 +113,9 @@ public abstract class VqaModel {
         for (String s : wordArray) {
             Integer ix = wordToIx.get(s);
             if (ix != null) {
-                result[i] = (float)ix;
+                result[i] = (float)ix + 1;
             } else {
-                result[i] = unknownWord;
+                result[i] = unknownWord + 1;
             }
             i++;
         }
@@ -166,23 +186,27 @@ public abstract class VqaModel {
                 jsonArray = new JSONArray(fileString);
             }
             int match = 0;
-            int[] elapsedCnnTime = new int[numberOfReadings];
-            int[] elapsedNlpTime = new int[numberOfReadings];
+            int[] elapsedCnnTime = new int[NUMBER_OF_READINGS];
+            int[] elapsedNlpTime = new int[NUMBER_OF_READINGS];
             List<List<Integer>> cpuUsages = new LinkedList<>();
-            String[] imageNames = new String[numberOfReadings];
-            String[] questions = new String[numberOfReadings];
-            String[] answers = new String[numberOfReadings];
-            for (int i = 0; i < numberOfReadings; i++) {
+            String[] imageNames = new String[NUMBER_OF_READINGS];
+            String[] questions = new String[NUMBER_OF_READINGS];
+            String[] answers = new String[NUMBER_OF_READINGS];
+            // Retrieving the questions, answers and image details separately
+            // so not covered in by the performance analysis.
+            for (int i = 0; i < NUMBER_OF_READINGS; i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 imageNames[i] = jsonObject.getString("img_name");
                 questions[i] = jsonObject.getString("question");
                 answers[i] = jsonObject.getString("ans");
             }
-            for (int i = 0; i < numberOfReadings; i++) {
+            for (int i = 0; i < NUMBER_OF_READINGS; i++) {
                 InputStream is = context.getAssets().open("images/" + imageNames[i]);
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
                 is.close();
 
+                // Sets a timer to run and store an approximation of the CPU
+                // around every 10ms until the answer has been generated.
                 List<Integer> cpuUsage = new LinkedList<>();
                 TimerTask cpuTimerTask = new TimerTask() {
                     public void run() {

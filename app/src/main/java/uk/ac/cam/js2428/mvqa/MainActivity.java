@@ -1,7 +1,6 @@
 package uk.ac.cam.js2428.mvqa;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
@@ -24,30 +23,42 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
+import uk.ac.cam.js2428.mvqa.models.EvaluationOutput;
+import uk.ac.cam.js2428.mvqa.models.VqaModel;
+import uk.ac.cam.js2428.mvqa.questions.QuestionException;
+
 public class MainActivity extends AppCompatActivity {
     private VqaModel vqa;
     private EvaluationOutput eo;
-    private String EVALUATION_OUTPUT_FILE_NAME = "cpu_usage.txt";
+    private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        vqa = new CnnLstmModel(this);
+        vqa = new CnnLstmF16Model(this);
         setContentView(R.layout.activity_main);
     }
 
+    /**
+     * Generates an intent to get content. This is then used to pick an image to perform inference
+     * on.
+     */
     public void submitImage(View view) {
-        // https://www.youtube.com/watch?v=TXjf3aK3GNo
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*"); // Pick any type of image
-        startActivityForResult(Intent.createChooser(intent, "Choose image"), 1);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Choose an image"), 1);
     }
 
+
+    /**
+     * Handles the result to requesting to access the camera roll. This is used to select
+     * and retrieve the chosen bitmap image to perform inference on.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -82,6 +93,12 @@ public class MainActivity extends AppCompatActivity {
         TextView textView = findViewById(R.id.answerTextView);
         textView.setText(answer);
     }
+
+
+    /**
+     * Handles the request permission to access external storage. Then the CPU readings
+     * output from the evaluation code is written to a json file in the external storage.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (requestCode == 1) {

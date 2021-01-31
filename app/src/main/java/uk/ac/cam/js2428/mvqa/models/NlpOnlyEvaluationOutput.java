@@ -1,9 +1,10 @@
-package uk.ac.cam.js2428.mvqa;
+package uk.ac.cam.js2428.mvqa.models;
 
 public class NlpOnlyEvaluationOutput {
     private int packetSize;
     private final int[] matches;
     private final long[] elapsedTime;
+
 
     public float[] getAccuracies() {
         float[] accuracies = new float[matches.length];

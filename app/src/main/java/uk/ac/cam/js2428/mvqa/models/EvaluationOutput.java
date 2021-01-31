@@ -1,4 +1,4 @@
-package uk.ac.cam.js2428.mvqa;
+package uk.ac.cam.js2428.mvqa.models;
 
 import android.os.Environment;
 
@@ -27,8 +27,8 @@ public class EvaluationOutput {
     }
 
     /**
-     * Returns the classifier's average elapsed time to generate image features
-     * @return time as a float in ms
+     * Returns the classifier's average elapsed time to generate image features.
+     * @return time as a float in ms.
      */
     public float getMeanCnnTime() {
         long total = 0;
@@ -40,8 +40,8 @@ public class EvaluationOutput {
 
     /**
      * Returns the classifier's average elapsed time to generate an answer
-     * from image features and processing a question
-     * @return time as a float in ms
+     * from image features and processing a question.
+     * @return time as a float in ms.
      */
     public float getMeanNlpTime() {
         long total = 0;
@@ -51,6 +51,10 @@ public class EvaluationOutput {
         return (float)((double)total/(double)elapsedNlpTime.length);
     }
 
+    /**
+     * Returns the classifier's mean CPU utilisation across the all inferences.
+     * @return CPU utilisation as a float
+     */
     public float getMeanCpuUtilisation() {
         long total = 0; // Long will be enough should not have overflow
         int size = 0;
@@ -63,6 +67,10 @@ public class EvaluationOutput {
         return (float)((double)total/(double)size);
     }
 
+    /**
+     * Gets the list of CPU readings, useful to store on disk for visualisations.
+     * @return A list of lists of integer CPU readings.
+     */
     public List<List<Integer>> getCpuTime() {
         return cpuTime;
     }
