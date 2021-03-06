@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -27,8 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import uk.ac.cam.js2428.mvqa.models.CnnF16LstmModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
+import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
 import uk.ac.cam.js2428.mvqa.models.EvaluationOutput;
+import uk.ac.cam.js2428.mvqa.models.SoftCnnLstmModel;
 import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
@@ -130,6 +134,11 @@ public class MainActivity extends AppCompatActivity {
      * @param view View of the onclick listener
      */
     public void evaluateTestSet(View view) {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "VQA::EvaluationWakeLock");
+        wakeLock.acquire(20*60*1000L /*20 minutes*/);
+
         eo = vqa.evaluate();
 
         TextView accuracyTextView = findViewById(R.id.accuracyTextView);
@@ -151,5 +160,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(permissions, 1);
         }
+
+        wakeLock.release();
     }
 }

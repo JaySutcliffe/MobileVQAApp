@@ -31,7 +31,7 @@ public abstract class VqaModel {
     private final Map<Integer, String> ixToAnswer = new HashMap<>();
     private float unknownWord;
 
-    private int NUMBER_OF_READINGS = 100;
+    private int NUMBER_OF_READINGS = 400;
 
     /**
      * Sets the image to perform the inference on. In the case where the image
@@ -214,7 +214,7 @@ public abstract class VqaModel {
                     }
                 };
                 Timer cpuTimer = new Timer("Cpu timer");
-                cpuTimer.schedule(cpuTimerTask, 0, 10);
+                //cpuTimer.schedule(cpuTimerTask, 0, 10);
 
                 long startTime = System.currentTimeMillis();
                 setImage(bitmap);
@@ -225,9 +225,9 @@ public abstract class VqaModel {
                 if (answers[i].equals(guess)) {
                     match++;
                 }
-                cpuTimerTask.cancel();
-                cpuTimer.cancel();
-                cpuUsages.add(cpuUsage);
+                //cpuTimerTask.cancel();
+                //cpuTimer.cancel();
+                //cpuUsages.add(cpuUsage);
             }
             return new EvaluationOutput(match, elapsedCnnTime, elapsedNlpTime, cpuUsages);
         } catch (IOException | JSONException | QuestionException e) {
