@@ -116,5 +116,4 @@ public abstract class CnnLstmModelBase extends VqaModel {
                         .add(new NormalizeOp(127.5f, 127.5f))
                         .build();
     }
-
 }

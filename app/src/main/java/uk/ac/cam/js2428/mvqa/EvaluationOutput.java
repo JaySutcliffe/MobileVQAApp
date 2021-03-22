@@ -1,4 +1,4 @@
-package uk.ac.cam.js2428.mvqa.models;
+package uk.ac.cam.js2428.mvqa;
 
 import android.os.Environment;
 
@@ -66,6 +66,25 @@ public class EvaluationOutput {
         }
         return (float)((double)total/(double)size);
     }
+
+
+    /**
+     * Gets the list of CNN inference times, useful to store on disk for visualisations.
+     * @return A list of lists of integer CPU readings.
+     */
+    public int[] getElapsedCnnTime() {
+        return elapsedCnnTime;
+    }
+
+
+    /**
+     * Gets the list of NLP inference times, useful to store on disk for visualisations.
+     * @return A list of lists of integer CPU readings.
+     */
+    public int[] getElapsedNlpTime() {
+        return elapsedNlpTime;
+    }
+
 
     /**
      * Gets the list of CPU readings, useful to store on disk for visualisations.

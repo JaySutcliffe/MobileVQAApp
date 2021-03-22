@@ -19,6 +19,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import souch.androidcpu.CpuInfo;
+import uk.ac.cam.js2428.mvqa.EvaluationOutput;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 import uk.ac.cam.js2428.mvqa.questions.QuestionTooLongException;
 import uk.ac.cam.js2428.mvqa.questions.UnknownAnswerException;

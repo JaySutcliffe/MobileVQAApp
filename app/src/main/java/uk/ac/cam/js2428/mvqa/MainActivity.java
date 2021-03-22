@@ -28,11 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import uk.ac.cam.js2428.mvqa.models.CnnF16LstmModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
-import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
-import uk.ac.cam.js2428.mvqa.models.EvaluationOutput;
-import uk.ac.cam.js2428.mvqa.models.SoftCnnLstmModel;
 import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
@@ -110,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
                 File file = new File(Environment.getExternalStorageDirectory(), EVALUATION_OUTPUT_FILE_NAME);
                 try (FileOutputStream fos = new FileOutputStream(file)){
                     JSONObject json = new JSONObject();
+
+                    // Put in CPU times
                     JSONArray cpuTimeJSON = new JSONArray();
                     for (List<Integer> list : eo.getCpuTime()) {
                         JSONArray cpuTimeRecord = new JSONArray();
@@ -119,6 +117,21 @@ public class MainActivity extends AppCompatActivity {
                         cpuTimeJSON.put(cpuTimeRecord);
                     }
                     json.put("cpu_usage", cpuTimeJSON);
+
+                    // Put in CNN times
+                    JSONArray cnnElapsedTimeJSON = new JSONArray();
+                    for (int cnnTime : eo.getElapsedCnnTime()) {
+                        cnnElapsedTimeJSON.put(cnnTime);
+                    }
+                    json.put("cnn_inference_time", cnnElapsedTimeJSON);
+
+                    // Put in NLP times
+                    JSONArray nlpElapsedTimeJSON = new JSONArray();
+                    for (int nlpTime : eo.getElapsedNlpTime()) {
+                        nlpElapsedTimeJSON.put(nlpTime);
+                    }
+                    json.put("nlp_inference_time", nlpElapsedTimeJSON);
+
                     fos.write(json.toString().getBytes());
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
