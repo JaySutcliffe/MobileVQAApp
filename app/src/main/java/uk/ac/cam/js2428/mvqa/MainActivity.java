@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
+import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
 import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        vqa = new CnnLstmF16Model(this);
+        vqa = new CnnLstmModel(this);
         setContentView(R.layout.activity_main);
     }
 
