@@ -9,23 +9,27 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
 
-import uk.ac.cam.js2428.mvqa.ml.Cnn;
+import uk.ac.cam.js2428.mvqa.ml.Mobilenet;
+import uk.ac.cam.js2428.mvqa.ml.Vqa;
 import uk.ac.cam.js2428.mvqa.ml.VqaF16;
 
-public class CnnLstmF16Model extends CnnLstmModel {
-    private Cnn cnn;
+public class CnnLstmF16Model extends CnnLstmModelBase {
+    private Mobilenet cnn;
     private VqaF16 model;
+
 
     @Override
     protected void setCnnImageFeature() {
         cnnImageFeature = cnn.process(imageFeature).getOutputFeature0AsTensorBuffer();
     }
 
+
     @Override
     protected float[] getAnswer() {
         VqaF16.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
         return vqaOutputs.getOutputFeature0AsTensorBuffer().getFloatArray();
     }
+
 
     public CnnLstmF16Model(Context context) {
         super(context);
@@ -44,7 +48,7 @@ public class CnnLstmF16Model extends CnnLstmModel {
         options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
-            cnn = Cnn.newInstance(context, options1);
+            cnn = Mobilenet.newInstance(context, options1);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();

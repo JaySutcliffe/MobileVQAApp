@@ -9,11 +9,11 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
 
-import uk.ac.cam.js2428.mvqa.ml.Cnn;
+import uk.ac.cam.js2428.mvqa.ml.Mobilenet;
 import uk.ac.cam.js2428.mvqa.ml.VqaSoft;
 
 public class SoftCnnLstmModel extends CnnLstmModel {
-    private Cnn cnn;
+    private Mobilenet cnn;
     private VqaSoft model;
 
     @Override
@@ -44,7 +44,7 @@ public class SoftCnnLstmModel extends CnnLstmModel {
         options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
-            cnn = Cnn.newInstance(context, options1);
+            cnn = Mobilenet.newInstance(context, options1);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();

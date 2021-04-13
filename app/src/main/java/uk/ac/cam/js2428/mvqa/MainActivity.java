@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -28,20 +29,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import uk.ac.cam.js2428.mvqa.ml.FullAttentionVqaF16;
+import uk.ac.cam.js2428.mvqa.ml.SoftAttentionVqa;
+import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.models.CnnLstmDyModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
+import uk.ac.cam.js2428.mvqa.models.FullAttentionModel;
+import uk.ac.cam.js2428.mvqa.models.SoftAttentionModel;
 import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
 public class MainActivity extends AppCompatActivity {
-    private VqaModel vqa;
+    private CnnLstmDyModel vqa;
     private EvaluationOutput eo;
     private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        vqa = new CnnLstmModel(this);
+        vqa = new CnnLstmDyModel(this);
         setContentView(R.layout.activity_main);
     }
 
@@ -151,7 +158,10 @@ public class MainActivity extends AppCompatActivity {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "VQA::EvaluationWakeLock");
-        wakeLock.acquire(20*60*1000L /*20 minutes*/);
+        wakeLock.acquire(10 * 60 * 1000L); // Lock for 10 minutes
+
+        // Stops screen turning off as appears to effect behaviour
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         eo = vqa.evaluate();
 
@@ -166,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                 append(eo.getMeanNlpTime()));
 
         TextView cpuTimeTextView = findViewById(R.id.cpuTimeTextView);
-        cpuTimeTextView.setText(new StringBuilder().append("Average CPU time = ").
+        cpuTimeTextView.setText(new StringBuilder().append("Average CPU usage = ").
                 append(eo.getMeanCpuUtilisation()));
 
 

@@ -9,12 +9,12 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.IOException;
 
-import uk.ac.cam.js2428.mvqa.ml.Mobilenet;
-import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.ml.FullAttentionVqaF16;
+import uk.ac.cam.js2428.mvqa.ml.Mobilenet3by3;
 
-public class CnnLstmModel extends CnnLstmModelBase {
-    private Mobilenet cnn;
-    private Vqa model;
+public class FullAttentionModel extends CnnLstmModelBase {
+    private Mobilenet3by3 cnn;
+    private FullAttentionVqaF16 model;
 
     @Override
     protected void setCnnImageFeature() {
@@ -23,13 +23,13 @@ public class CnnLstmModel extends CnnLstmModelBase {
 
     @Override
     protected float[] getAnswer() {
-        Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
+        FullAttentionVqaF16.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
         return vqaOutputs.getOutputFeature0AsTensorBuffer().getFloatArray();
     }
 
-
-    public CnnLstmModel(Context context) {
+    public FullAttentionModel(Context context) {
         super(context);
+        maxQuestionLength = 14;
 
         Model.Options options1;
         Model.Options options2;
@@ -41,12 +41,10 @@ public class CnnLstmModel extends CnnLstmModelBase {
             options1 = new Model.Options.Builder().setNumThreads(4).build();
         }
 
-        // CnnLstmModel does not appear to work on the GPU due to incompatibilities
-        //options2 = new Model.Options.Builder().setNumThreads(4).build();
-        options2 = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
+        options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
-            cnn = Mobilenet.newInstance(context, options1);
+            cnn = Mobilenet3by3.newInstance(context, options1);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();
@@ -54,11 +52,11 @@ public class CnnLstmModel extends CnnLstmModelBase {
 
         // Initialising the VQA model
         try {
-            model = Vqa.newInstance(context, options2);
+            model = FullAttentionVqaF16.newInstance(context, options2);
             questionFeature =
-                    TensorBuffer.createFixedSize(new int[]{1, 26}, DataType.FLOAT32);
+                    TensorBuffer.createFixedSize(new int[]{1, 14}, DataType.FLOAT32);
             cnnImageFeature =
-                    TensorBuffer.createFixedSize(new int[]{1, 1280}, DataType.FLOAT32);
+                    TensorBuffer.createFixedSize(new int[]{1, 3, 3, 1280}, DataType.FLOAT32);
         } catch (IOException e) {
             System.err.println("Problem initialising TensorFlow VQA model");
             e.printStackTrace();

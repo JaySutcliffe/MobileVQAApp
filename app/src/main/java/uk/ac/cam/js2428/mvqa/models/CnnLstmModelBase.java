@@ -41,6 +41,7 @@ public abstract class CnnLstmModelBase extends VqaModel {
 
     @Override
     public String runInference(String question) throws QuestionException {
+        float[] q = parseQuestion(question);
         questionFeature.loadArray(parseQuestion(question));
         float[] probs = getAnswer();
         float maxProb = 0;
@@ -109,11 +110,10 @@ public abstract class CnnLstmModelBase extends VqaModel {
     public CnnLstmModelBase(Context context) {
         super(context);
 
-        imageProcessor =
-                new ImageProcessor.Builder()
-                        .add(new ResizeOp(224, 224,
-                                ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
-                        .add(new NormalizeOp(127.5f, 127.5f))
-                        .build();
+        imageProcessor = new ImageProcessor.Builder()
+                            .add(new ResizeOp(224, 224,
+                                     ResizeOp.ResizeMethod.NEAREST_NEIGHBOR))
+                            .add(new NormalizeOp(127.5f, 127.5f))
+                            .build();
     }
 }

@@ -25,7 +25,7 @@ import uk.ac.cam.js2428.mvqa.questions.QuestionTooLongException;
 import uk.ac.cam.js2428.mvqa.questions.UnknownAnswerException;
 
 public abstract class VqaModel {
-    protected final int maxQuestionLength = 26;
+    protected int maxQuestionLength = 26;
     protected final Context context;
 
     private final Map<String, Integer> wordToIx = new HashMap<>();
@@ -105,10 +105,6 @@ public abstract class VqaModel {
         String reg = "[-.\"',;? !$#@~()*&^%\\[\\]/\\\\+<>\\n=]";
         String[] wordArray = question.split(reg);
 
-        if (wordArray.length >= maxQuestionLength) {
-            throw new QuestionTooLongException(maxQuestionLength);
-        }
-
         float[] result = new float[maxQuestionLength];
         int i = 0;
         for (String s : wordArray) {
@@ -119,6 +115,9 @@ public abstract class VqaModel {
                 result[i] = unknownWord + 1;
             }
             i++;
+            if (i >= maxQuestionLength) {
+                break;
+            }
         }
         return result;
     }

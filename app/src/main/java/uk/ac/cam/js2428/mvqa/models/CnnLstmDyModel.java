@@ -10,25 +10,27 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 import java.io.IOException;
 
 import uk.ac.cam.js2428.mvqa.ml.Mobilenet;
-import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.ml.VqaDy;
 
-public class CnnLstmModel extends CnnLstmModelBase {
+public class CnnLstmDyModel extends CnnLstmModelBase {
     private Mobilenet cnn;
-    private Vqa model;
+    private VqaDy model;
+
 
     @Override
     protected void setCnnImageFeature() {
         cnnImageFeature = cnn.process(imageFeature).getOutputFeature0AsTensorBuffer();
     }
 
+
     @Override
     protected float[] getAnswer() {
-        Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
+        VqaDy.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
         return vqaOutputs.getOutputFeature0AsTensorBuffer().getFloatArray();
     }
 
 
-    public CnnLstmModel(Context context) {
+    public CnnLstmDyModel(Context context) {
         super(context);
 
         Model.Options options1;
@@ -42,8 +44,7 @@ public class CnnLstmModel extends CnnLstmModelBase {
         }
 
         // CnnLstmModel does not appear to work on the GPU due to incompatibilities
-        //options2 = new Model.Options.Builder().setNumThreads(4).build();
-        options2 = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
+        options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
             cnn = Mobilenet.newInstance(context, options1);
@@ -54,7 +55,7 @@ public class CnnLstmModel extends CnnLstmModelBase {
 
         // Initialising the VQA model
         try {
-            model = Vqa.newInstance(context, options2);
+            model = VqaDy.newInstance(context, options2);
             questionFeature =
                     TensorBuffer.createFixedSize(new int[]{1, 26}, DataType.FLOAT32);
             cnnImageFeature =
@@ -65,3 +66,4 @@ public class CnnLstmModel extends CnnLstmModelBase {
         }
     }
 }
+

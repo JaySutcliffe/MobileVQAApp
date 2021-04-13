@@ -10,11 +10,11 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 import java.io.IOException;
 
 import uk.ac.cam.js2428.mvqa.ml.Mobilenet;
-import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.ml.SoftAttentionVqa;
 
-public class CnnLstmModel extends CnnLstmModelBase {
+public class SoftAttentionModel extends CnnLstmModelBase {
     private Mobilenet cnn;
-    private Vqa model;
+    private SoftAttentionVqa model;
 
     @Override
     protected void setCnnImageFeature() {
@@ -23,12 +23,11 @@ public class CnnLstmModel extends CnnLstmModelBase {
 
     @Override
     protected float[] getAnswer() {
-        Vqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
+        SoftAttentionVqa.Outputs vqaOutputs = model.process(questionFeature, cnnImageFeature);
         return vqaOutputs.getOutputFeature0AsTensorBuffer().getFloatArray();
     }
 
-
-    public CnnLstmModel(Context context) {
+    public SoftAttentionModel(Context context) {
         super(context);
 
         Model.Options options1;
@@ -42,8 +41,7 @@ public class CnnLstmModel extends CnnLstmModelBase {
         }
 
         // CnnLstmModel does not appear to work on the GPU due to incompatibilities
-        //options2 = new Model.Options.Builder().setNumThreads(4).build();
-        options2 = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
+        options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
             cnn = Mobilenet.newInstance(context, options1);
@@ -54,7 +52,7 @@ public class CnnLstmModel extends CnnLstmModelBase {
 
         // Initialising the VQA model
         try {
-            model = Vqa.newInstance(context, options2);
+            model = SoftAttentionVqa.newInstance(context, options2);
             questionFeature =
                     TensorBuffer.createFixedSize(new int[]{1, 26}, DataType.FLOAT32);
             cnnImageFeature =
