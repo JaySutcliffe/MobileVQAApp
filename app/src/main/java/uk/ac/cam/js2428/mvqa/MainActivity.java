@@ -32,6 +32,7 @@ import java.util.List;
 import uk.ac.cam.js2428.mvqa.ml.FullAttentionVqaF16;
 import uk.ac.cam.js2428.mvqa.ml.SoftAttentionVqa;
 import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.models.CnnF16LstmModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmDyModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
@@ -41,14 +42,14 @@ import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
 public class MainActivity extends AppCompatActivity {
-    private CnnLstmDyModel vqa;
+    private FullAttentionModel vqa;
     private EvaluationOutput eo;
-    private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output.json";
+    private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output_full2.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        vqa = new CnnLstmDyModel(this);
+        vqa = new FullAttentionModel(this);
         setContentView(R.layout.activity_main);
     }
 
@@ -74,10 +75,14 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = findViewById(R.id.imageView);
 
             try {
-                InputStream is = getContentResolver().openInputStream(data.getData());
+                //InputStream is = getContentResolver().openInputStream(data.getData());
+                InputStream is = getAssets().open("images/COCO_val2014_000000107656.jpg");
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
-                imageView.setImageBitmap(bitmap);
+                vqa.setImage(bitmap);
+                imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 800, 800, false));
             } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

@@ -42,8 +42,7 @@ public class CnnLstmModel extends CnnLstmModelBase {
         }
 
         // CnnLstmModel does not appear to work on the GPU due to incompatibilities
-        //options2 = new Model.Options.Builder().setNumThreads(4).build();
-        options2 = new Model.Options.Builder().setDevice(Model.Device.GPU).build();
+        options2 = new Model.Options.Builder().setNumThreads(4).build();
 
         try {
             cnn = Mobilenet.newInstance(context, options1);

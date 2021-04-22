@@ -2,7 +2,7 @@ package uk.ac.cam.js2428.mvqa.models;
 
 import android.content.Context;
 
-public class CnnI8LstmModel extends CnnLstmModelBase {
+public class CnnDyLstmModel extends CnnLstmModelBase {
 
     @Override
     protected void setCnnImageFeature() {
@@ -14,7 +14,7 @@ public class CnnI8LstmModel extends CnnLstmModelBase {
         return new float[0];
     }
 
-    public CnnI8LstmModel(Context context) {
+    public CnnDyLstmModel(Context context) {
         super(context);
     }
 }
