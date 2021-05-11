@@ -37,8 +37,8 @@ public abstract class VqaModel {
     /**
      * Sets the image to perform the inference on. In the case where the image
      * feature model is separate from the question processing part of the model,
-     * the image features will be calculated by this function.
-     * @param bitmap the bitmap image to be entered.
+     * the image features will be calculated by this function
+     * @param bitmap the bitmap image to be entered
      */
     public abstract void setImage(Bitmap bitmap);
 
@@ -46,11 +46,11 @@ public abstract class VqaModel {
      * Runs the VQA model inference on the question entered. The image must be
      * set beforehand. A QuestionException is thrown if the question is too long.
      * Currently the maximum length of the question is 26 words which covers all
-     * possible questions in the VQA dataset.
+     * possible questions in the VQA dataset
      * @param question a String of words
-     * @return float array of word indices.
+     * @return float array of word indices
      * @throws QuestionTooLongException if the question length is longer than
-     * the maximum number of words for the model.
+     * the maximum number of words for the model
      */
     public abstract String runInference(String question) throws QuestionException;
 
@@ -96,9 +96,9 @@ public abstract class VqaModel {
     /**
      * Converts the question to a suitable format to pass to the VQA model.
      * @param question a String of words
-     * @return float array of word indices.
+     * @return float array of word indices
      * @throws QuestionTooLongException if the question length is longer than
-     * the maximum number of words for the model.
+     * the maximum number of words for the model
      */
     protected float[] parseQuestion(String question) throws QuestionException {
         question = question.toLowerCase();
@@ -126,9 +126,9 @@ public abstract class VqaModel {
      * Converts the question to a suitable format to pass to the VQA model.
      * This is for VQA models when the question is left-padded
      * @param question a String of words
-     * @return float array of word indices.
+     * @return float array of word indices
      * @throws QuestionTooLongException if the question length is longer than
-     * the maximum number of words for the model.
+     * the maximum number of words for the model
      */
     protected float[] parseQuestionLeftPadded(String question) throws QuestionException {
         question = question.toLowerCase();
@@ -154,11 +154,11 @@ public abstract class VqaModel {
     }
 
     /**
-     * Converts the input index into an answer.
-     * @param answer an int representing the answer.
-     * @return the answer as a String of characters.
+     * Converts the input index into an answer
+     * @param answer an int representing the answer
+     * @return the answer as a String of characters
      * @throws UnknownAnswerException if index has no
-     * corresponding answer.
+     * corresponding answer
      */
     protected String decodeAnswer(int answer) throws UnknownAnswerException {
         String s = ixToAnswer.get(answer);

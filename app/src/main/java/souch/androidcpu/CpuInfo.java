@@ -6,6 +6,10 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+/*
+souch.  Androidcpu.  Available at https://github.com/souch/AndroidCPU (30/1/2021), 2018
+*/
+
 public class CpuInfo {
 
     /*

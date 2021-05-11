@@ -33,6 +33,7 @@ public abstract class CnnLstmModelBase extends VqaModel {
 
     @Override
     public void setImage(Bitmap bitmap) {
+        // Setting image bitmap
         TensorImage tImage = new TensorImage(DataType.FLOAT32);
         tImage.load(bitmap);
         imageFeature = imageProcessor.process(tImage).getTensorBuffer();
@@ -41,6 +42,7 @@ public abstract class CnnLstmModelBase extends VqaModel {
 
     @Override
     public String runInference(String question) throws QuestionException {
+        // Getting and processing the answer from question string
         float[] q = parseQuestion(question);
         questionFeature.loadArray(parseQuestion(question));
         float[] probs = getAnswer();
@@ -55,6 +57,11 @@ public abstract class CnnLstmModelBase extends VqaModel {
         return decodeAnswer(answer);
     }
 
+    /**
+     * Runs the network on a subset of the test data generating a object
+     * containing information about performance metrics and accuracy
+     * @return an NlpOnlyEvaluationOutput object
+     */
     public NlpOnlyEvaluationOutput evaluateQuestionOnly() {
         try {
             long[] elapsedTime = new long[PACKET_COUNT];
