@@ -29,27 +29,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import uk.ac.cam.js2428.mvqa.ml.AttentionVqa;
 import uk.ac.cam.js2428.mvqa.ml.FullAttentionVqaF16;
 import uk.ac.cam.js2428.mvqa.ml.SoftAttentionVqa;
 import uk.ac.cam.js2428.mvqa.ml.Vqa;
+import uk.ac.cam.js2428.mvqa.ml.VqaPrunedDy;
+import uk.ac.cam.js2428.mvqa.models.AttentionModel;
+import uk.ac.cam.js2428.mvqa.models.CnnDyLstmPrunedDyModel;
 import uk.ac.cam.js2428.mvqa.models.CnnF16LstmModel;
+import uk.ac.cam.js2428.mvqa.models.CnnF16LstmPrunedDyModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmDyModel;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmF16Model;
 import uk.ac.cam.js2428.mvqa.models.CnnLstmModel;
+import uk.ac.cam.js2428.mvqa.models.CnnLstmPrunedDyModel;
+import uk.ac.cam.js2428.mvqa.models.FullAttentionDyModel;
 import uk.ac.cam.js2428.mvqa.models.FullAttentionModel;
 import uk.ac.cam.js2428.mvqa.models.SoftAttentionModel;
 import uk.ac.cam.js2428.mvqa.models.VqaModel;
 import uk.ac.cam.js2428.mvqa.questions.QuestionException;
 
 public class MainActivity extends AppCompatActivity {
-    private FullAttentionModel vqa;
+    private CnnLstmPrunedDyModel vqa;
     private EvaluationOutput eo;
-    private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output_full2.json";
+    private String EVALUATION_OUTPUT_FILE_NAME = "evaluation_output_attention.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        vqa = new FullAttentionModel(this);
+        vqa = new CnnLstmPrunedDyModel(this);
         setContentView(R.layout.activity_main);
     }
 
@@ -75,14 +82,12 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = findViewById(R.id.imageView);
 
             try {
-                //InputStream is = getContentResolver().openInputStream(data.getData());
-                InputStream is = getAssets().open("images/COCO_val2014_000000107656.jpg");
+                InputStream is = getContentResolver().openInputStream(data.getData());
+                //InputStream is = getAssets().open("images/COCO_val2014_000000040036.jpg");
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
                 vqa.setImage(bitmap);
                 imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 800, 800, false));
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -113,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
      * output from the evaluation code is written to a json file in the external storage.
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == 1) {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 File file = new File(Environment.getExternalStorageDirectory(), EVALUATION_OUTPUT_FILE_NAME);
